@@ -10,6 +10,71 @@
         }
     ],
     "paths": {
+        "/register": {
+            "post": {
+                "tags": [
+                    "Auth"
+                ],
+                "description": "Register a new user",
+                "operationId": "0903f2e0df1a8857bee538fc055417f0",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "multipart/form-data": {
+                            "schema": {
+                                "required": [
+                                    "username",
+                                    "email",
+                                    "password",
+                                    "password_confirmation",
+                                    "first_name",
+                                    "last_name"
+                                ],
+                                "properties": {
+                                    "username": {
+                                        "type": "string"
+                                    },
+                                    "email": {
+                                        "type": "string",
+                                        "format": "email"
+                                    },
+                                    "first_name": {
+                                        "type": "string"
+                                    },
+                                    "last_name": {
+                                        "type": "string"
+                                    },
+                                    "password": {
+                                        "type": "string",
+                                        "minLength": 8,
+                                        "example": "12345678a"
+                                    },
+                                    "password_confirmation": {
+                                        "type": "string",
+                                        "minLength": 8,
+                                        "example": "12345678a"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "successful operation"
+                    },
+                    "422": {
+                        "description": "Validation Error."
+                    }
+                },
+                "security": [
+                    {
+                        "bearer_token": []
+                    }
+                ]
+            }
+        },
         "/login": {
             "post": {
                 "tags": [

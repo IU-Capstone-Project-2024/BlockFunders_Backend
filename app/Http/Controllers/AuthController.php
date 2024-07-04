@@ -2,8 +2,13 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 use App\Http\Resources\UserResource;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Validator;
+use Illuminate\Validation\Rules\Password;
 use Illuminate\Validation\ValidationException;
 
 class AuthController extends Controller
@@ -11,6 +16,76 @@ class AuthController extends Controller
     public function __construct()
     {
         $this->middleware('auth:sanctum')->only(['logout']);
+    }
+
+     /**
+     * @OA\Post(
+     * path="/register",
+     * description="Register a new user",
+     * tags={"Auth"},
+     * security={{"bearer_token": {} }},
+     *   @OA\RequestBody(
+     *       required=true,
+     *       @OA\MediaType(
+     *           mediaType="multipart/form-data",
+     *           @OA\Schema(
+     *              required={"username", "email", "password", "password_confirmation","first_name","last_name"},
+     *              @OA\Property(property="username", type="string"),
+     *              @OA\Property(property="email", type="string", format="email"),
+     *              @OA\Property(property="first_name", type="string"),
+     *              @OA\Property(property="last_name", type="string"),
+     *              @OA\Property(property="password", type="string", minLength=8 , example="12345678a"),
+     *              @OA\Property(property="password_confirmation", type="string", minLength=8, example="12345678a"),
+     * 
+     *          )
+     *       )
+     *   ),
+     * @OA\Response(
+     *    response=200,
+     *    description="successful operation",
+     *     ),
+     *     @OA\Response(
+     *         response=422,
+     *         description="Validation Error."
+     *     )
+     * )
+     * )
+     */
+    public function register(Request $request)
+    {
+        $Validator1 = Validator::make($request->all(),[
+            'username' => ['required', Rule::unique('users', 'username')],
+            'email' => ['required','email', Rule::unique('users', 'email')],
+            'password'  => ['required', 'confirmed', 'string'],
+            'first_name' => ['required', 'string'],
+            'last_name' => ['required', 'string'],
+        ]);
+
+        $errors = $Validator1->errors();
+        $Validator2 = Validator::make($request->all(),[
+            'password' => [Password::min(8)->letters()->numbers()],
+        ]);
+
+        if($Validator2->fails())
+        $errors->add('password', __('validation.custom.password.custom_password', ['attribute' => __('validation.attributes.password')]));
+
+        if($Validator1->fails() || $Validator2->fails())
+            throw ValidationException::withMessages($errors->toArray());
+
+        $user = User::create([
+            'username' => $request->username,
+            'email' => $request->email,
+            'first_name' => $request->first_name,
+            'last_name' => $request->last_name,
+            'password' => Hash::make($request->password),
+        ]);
+
+        $token = $user->createToken('block-funders')->plainTextToken;
+
+        return response()->json([
+            'user' => new UserResource($user),
+            'token' => $token,
+        ], 200);
     }
 
     /**

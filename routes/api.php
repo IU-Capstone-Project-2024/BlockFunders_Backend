@@ -9,6 +9,7 @@ use App\Http\Controllers\CampaignController;
 use App\Http\Controllers\PermissionController;
 use App\Http\Controllers\CampaignCategoryController;
 
+Route::post('/register', [AuthController::class, 'register']);
 Route::post('/login', [AuthController::class, 'login']);
 Route::post('/logout', [AuthController::class, 'logout']);
 Route::apiResource('/users', UserController::class);
