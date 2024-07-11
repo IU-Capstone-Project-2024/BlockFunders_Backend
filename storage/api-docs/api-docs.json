@@ -142,6 +142,29 @@
                 ]
             }
         },
+        "/profile": {
+            "post": {
+                "tags": [
+                    "Auth"
+                ],
+                "summary": "Get My Profile",
+                "description": "user profile",
+                "operationId": "c9645f8c93e992e4df8b013e542bd367",
+                "responses": {
+                    "200": {
+                        "description": "successful operation"
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    }
+                },
+                "security": [
+                    {
+                        "bearer_token": []
+                    }
+                ]
+            }
+        },
         "/campaign/categories": {
             "get": {
                 "tags": [

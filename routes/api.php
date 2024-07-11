@@ -12,6 +12,7 @@ use App\Http\Controllers\CampaignCategoryController;
 Route::post('/register', [AuthController::class, 'register']);
 Route::post('/login', [AuthController::class, 'login']);
 Route::post('/logout', [AuthController::class, 'logout']);
+Route::post('/profile', [AuthController::class, 'profile']);
 Route::apiResource('/users', UserController::class);
 Route::get('/permissions', [PermissionController::class, 'get_all_permissions']);
 Route::get('/permissions/me', [PermissionController::class, 'my_permissions']);

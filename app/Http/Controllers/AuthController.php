@@ -15,7 +15,7 @@ class AuthController extends Controller
 {
     public function __construct()
     {
-        $this->middleware('auth:sanctum')->only(['logout']);
+        $this->middleware('auth:sanctum')->only(['logout', 'profile']);
     }
 
      /**
@@ -174,5 +174,29 @@ class AuthController extends Controller
      public function logout(Request $request)
      {
         $request->user()->tokens()->delete();
+     }
+
+     /**
+     * Get My Profile
+     * @OA\Post(
+     * path="/profile",
+     * description="user profile",
+     * tags={"Auth"},
+     * security={{"bearer_token": {} }},
+     * @OA\Response(
+     *    response=200,
+     *    description="successful operation",
+     *     ),
+     *  @OA\Response(
+     *    response=401,
+     *    description="Unauthenticated",
+     *     )
+     * )
+     * )
+     */
+
+     public function profile(Request $request)
+     {
+        return response()->json(new UserResource($request->user()));
      }
 }
