@@ -24,6 +24,8 @@ class CampaignResource extends JsonResource
             'user' => $this->user,
             'category' => new CampaignCategoryResource($this->whenLoaded('category')),
             'campaign_update' => $this->whenLoaded('updates', fn () => CampaignUpdateResource::collection($this->updates)),
+            'image' => $this->image,
+            'deadline' => $this->deadline,
             'created_at' => $this->created_at,
             'updated_at' => $this->updated_at,
         ];

@@ -17,6 +17,8 @@ class Campaign extends Model
         'target_amount',
         'collected_amount',
         'status',
+        'deadline',
+        'image'
     ];
 
     public function user()
@@ -37,6 +39,7 @@ class Campaign extends Model
     public function scopeSearch($query, $searchTerm)
     {
         return $query->where('title', 'like', "%{$searchTerm}%")
-                     ->orWhere('description', 'like', "%{$searchTerm}%");
+                     ->orWhere('description', 'like', "%{$searchTerm}%")
+                     ->orWhere('status', 'like', "%{$searchTerm}%");
     }
 }

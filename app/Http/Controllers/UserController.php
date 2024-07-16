@@ -17,9 +17,9 @@ class UserController extends Controller
     public function __construct()
     {
         $this->middleware('auth:sanctum');
-        $this->middleware('permission:users.read')->only(['index', 'show']);
-        $this->middleware('permission:users.write')->only(['store', 'update']);
-        $this->middleware('permission:users.delete')->only(['destroy']);
+        // $this->middleware('permission:users.read')->only(['index', 'show']);
+        // $this->middleware('permission:users.write')->only(['store', 'update']);
+        // $this->middleware('permission:users.delete')->only(['destroy']);
     }
 
      /**

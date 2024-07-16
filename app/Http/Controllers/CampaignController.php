@@ -11,8 +11,8 @@ class CampaignController extends Controller
     public function __construct()
     {
         $this->middleware('auth:sanctum');
-        $this->middleware('permission:campaigns.read')->only(['index', 'show']);
-        $this->middleware('permission:campaigns.write')->only(['store', 'update']);
+        // $this->middleware('permission:campaigns.read')->only(['index', 'show']);
+        // $this->middleware('permission:campaigns.write')->only(['store', 'update']);
         $this->middleware('permission:campaigns.delete')->only(['destroy']);
     }
 
@@ -156,12 +156,14 @@ class CampaignController extends Controller
      *       @OA\MediaType(
      *           mediaType="multipart/form-data",
      *           @OA\Schema(
-     *                 required={"title", "description","category_id","target_amount","collected_amount", "status"},
+     *                 required={"title", "description","category_id","target_amount","collected_amount", "status", "image", "deadline"},
      *                 @OA\Property(property="title", type="string"),
      *                 @OA\Property(property="description", type="string"),
      *                 @OA\Property(property="category_id", type="integer"),
      *                 @OA\Property(property="target_amount", type="number", format="float"),
      *                 @OA\Property(property="collected_amount", type="number", format="float"),
+     * *               @OA\Property(property="deadline", type="number", format="integer"),
+     * *               @OA\Property(property="image", type="file", description="image file (JPEG/JPG/PNG)"),
      *                 @OA\Property(property="status", type="string"),
      *          )
      *       )
@@ -195,6 +197,8 @@ class CampaignController extends Controller
             'target_amount' => ['required','numeric','min:0'],
             'collected_amount' => ['required','numeric','min:0'],
             'status' => ['required','string'],
+            'image'=> ['required'],
+            'deadline' => ['required'],
         ]);
 
         $campaign = new Campaign();
@@ -205,6 +209,12 @@ class CampaignController extends Controller
         $campaign->target_amount = $request->target_amount;
         $campaign->collected_amount = $request->collected_amount;
         $campaign->status = $request->status;
+        $campaign->deadline = $request->deadline;
+
+        if ($request->hasFile('image')) {
+            $imagePath = upload_file($request->file('image'), 'campaigns', 'images');
+            $campaign->image = $imagePath;
+        }
         $campaign->save();
 
         $campaign->load('category');

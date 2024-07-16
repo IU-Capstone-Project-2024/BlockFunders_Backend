@@ -18,6 +18,14 @@ class AuthController extends Controller
         $this->middleware('auth:sanctum')->only(['logout', 'profile']);
     }
 
+
+    function get_random_profile_image() {
+        // give random number in php laravel
+        $random_number = rand(1, 3);
+        return url('public/profile/' .$random_number . '.png');
+    }
+
+
      /**
      * @OA\Post(
      * path="/register",
@@ -78,6 +86,7 @@ class AuthController extends Controller
             'first_name' => $request->first_name,
             'last_name' => $request->last_name,
             'password' => Hash::make($request->password),
+            'profile_picture' => $this->get_random_profile_image(),
         ]);
 
         $token = $user->createToken('block-funders')->plainTextToken;

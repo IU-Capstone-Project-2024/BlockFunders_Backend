@@ -6,6 +6,9 @@
     },
     "servers": [
         {
+          "url":"https://block-funders.haidarjbeily.com/public/api"  
+        },
+        {
             "url": "http://127.0.0.1:8000/api"
         }
     ],
@@ -495,7 +498,9 @@
                                     "category_id",
                                     "target_amount",
                                     "collected_amount",
-                                    "status"
+                                    "status",
+                                    "image",
+                                    "deadline"
                                 ],
                                 "properties": {
                                     "title": {
@@ -514,6 +519,14 @@
                                     "collected_amount": {
                                         "type": "number",
                                         "format": "float"
+                                    },
+                                    "deadline": {
+                                        "type": "number",
+                                        "format": "integer"
+                                    },
+                                    "image": {
+                                        "description": "image file (JPEG/JPG/PNG)",
+                                        "type": "file"
                                     },
                                     "status": {
                                         "type": "string"
