@@ -558,6 +558,45 @@
                 ]
             }
         },
+        "/campaigns/{campaign}/me": {
+            "get": {
+                "tags": [
+                    "Campaigns"
+                ],
+                "summary": "Get my campaigns",
+                "description": "Get my campaigns",
+                "operationId": "478b6757f485a56f17703181548b609c",
+                "parameters": [
+                    {
+                        "name": "campaign",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Success"
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    },
+                    "404": {
+                        "description": "Model not found."
+                    },
+                    "403": {
+                        "description": "Forbidden. This action is unauthorized."
+                    }
+                },
+                "security": [
+                    {
+                        "bearer_token": []
+                    }
+                ]
+            }
+        },
         "/campaigns/{campaign}": {
             "get": {
                 "tags": [
@@ -600,8 +639,8 @@
                 "tags": [
                     "Campaigns"
                 ],
-                "summary": "Update a campaign.",
-                "description": "Update a campaign.",
+                "summary": "Publish a campaign.",
+                "description": "Publish a campaign.",
                 "operationId": "b372db25be16d317167a5db7022efb78",
                 "parameters": [
                     {
@@ -619,10 +658,10 @@
                         "multipart/form-data": {
                             "schema": {
                                 "required": [
-                                    "update_text"
+                                    "tx_hash"
                                 ],
                                 "properties": {
-                                    "update_text": {
+                                    "tx_hash": {
                                         "type": "string"
                                     },
                                     "_method": {
@@ -685,6 +724,67 @@
                     },
                     "403": {
                         "description": "Forbidden. This action is unauthorized."
+                    }
+                },
+                "security": [
+                    {
+                        "bearer_token": []
+                    }
+                ]
+            }
+        },
+        "/campaigns/{campaign}/fund": {
+            "post": {
+                "tags": [
+                    "Campaigns"
+                ],
+                "summary": "Fund a campaign.",
+                "description": "Fund a campaign.",
+                "operationId": "d12aaa5df4218aa458f822d93608ac52",
+                "parameters": [
+                    {
+                        "name": "campaign",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "multipart/form-data": {
+                            "schema": {
+                                "required": [
+                                    "tx_hash"
+                                ],
+                                "properties": {
+                                    "tx_hash": {
+                                        "type": "string"
+                                    },
+                                    "amount": {
+                                        "type": "number",
+                                        "format": "float"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "successful operation"
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    },
+                    "403": {
+                        "description": "Forbidden. This action is unauthorized."
+                    },
+                    "422": {
+                        "description": "Validation error."
                     }
                 },
                 "security": [

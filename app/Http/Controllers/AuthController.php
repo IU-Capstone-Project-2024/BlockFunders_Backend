@@ -206,6 +206,7 @@ class AuthController extends Controller
 
      public function profile(Request $request)
      {
+        $request->user()->load('transactions');
         return response()->json(new UserResource($request->user()));
      }
 }

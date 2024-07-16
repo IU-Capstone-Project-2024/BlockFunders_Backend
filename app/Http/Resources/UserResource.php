@@ -25,6 +25,7 @@ class UserResource extends JsonResource
             'profile_picture'=> $this->profile_picture,
             'role' => $this->whenLoaded('roles', fn () => RoleResource::collection($this->roles)->first()),
             'permissions' => $this->whenLoaded('permissions', fn () => PermissionResource::collection($this->permissions)),
+            'transactions' => $this->whenLoaded('transactions', fn () => FundingTransactionResource::collection($this->transactions)),
             'created_at' => $this->created_at,
             'updated_at' => $this->updated_at,            
         ];

@@ -36,6 +36,11 @@ class Campaign extends Model
         return $this->hasMany(CampaignUpdate::class);
     }
 
+    public function transactions()
+    {
+        return $this->hasMany(Transaction::class);
+    }
+
     public function scopeSearch($query, $searchTerm)
     {
         return $query->where('title', 'like', "%{$searchTerm}%")

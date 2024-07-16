@@ -10,7 +10,7 @@ class CampaignController extends Controller
 {
     public function __construct()
     {
-        $this->middleware('auth:sanctum');
+        $this->middleware('auth:sanctum')->only(['me', 'fund', 'update', 'destroy', 'store']);
         // $this->middleware('permission:campaigns.read')->only(['index', 'show']);
         // $this->middleware('permission:campaigns.write')->only(['store', 'update']);
         $this->middleware('permission:campaigns.delete')->only(['destroy']);
@@ -106,6 +106,7 @@ class CampaignController extends Controller
         return CampaignResource::collection($campaigns);
     }
 
+
      /**
      * Get specific campaigns
      * @OA\Get(
@@ -140,7 +141,7 @@ class CampaignController extends Controller
 
      public function show(Campaign $campaign)
      {
-        $campaign->load(['updates','category']);
+        $campaign->load(['category', 'transactions']);
         return response()->json(new CampaignResource($campaign));
      }
 
@@ -195,8 +196,6 @@ class CampaignController extends Controller
             'description' => ['required','string'],
             'category_id' => ['required','exists:campaign_categories,id'],
             'target_amount' => ['required','numeric','min:0'],
-            'collected_amount' => ['required','numeric','min:0'],
-            'status' => ['required','string'],
             'image'=> ['required'],
             'deadline' => ['required'],
         ]);
@@ -207,8 +206,8 @@ class CampaignController extends Controller
         $campaign->description = $request->description;
         $campaign->category_id = $request->category_id;
         $campaign->target_amount = $request->target_amount;
-        $campaign->collected_amount = $request->collected_amount;
-        $campaign->status = $request->status;
+        $campaign->collected_amount = 0;
+        $campaign->status = 'draft';
         $campaign->deadline = $request->deadline;
 
         if ($request->hasFile('image')) {
@@ -217,16 +216,16 @@ class CampaignController extends Controller
         }
         $campaign->save();
 
-        $campaign->load('category');
+        $campaign->load(['category', 'transactions']);
 
         return response()->json(new CampaignResource($campaign), 201);
     }
 
     /**
-    * Update a campaign.
+    * Publish a campaign.
      * @OA\Post(
      * path="/campaigns/{campaign}",
-     * description="Update a campaign.",
+     * description="Publish a campaign.",
      *    @OA\Parameter(
      *     in="path",
      *     name="campaign",
@@ -240,8 +239,8 @@ class CampaignController extends Controller
      *       @OA\MediaType(
      *           mediaType="multipart/form-data",
      *           @OA\Schema(
-     *                 required={"update_text"},
-     *                 @OA\Property(property="update_text", type="string"),
+     *                 required={"tx_hash"},
+     *                 @OA\Property(property="tx_hash", type="string"),
      *                 @OA\Property(property="_method", type="string", format="string", example="PUT"),
 
      *          )
@@ -270,14 +269,84 @@ class CampaignController extends Controller
     public function update(Request $request, Campaign $campaign)
     {
         $request->validate([
-            'update_text' => ['required','string'],
+            'tx_hash' => ['required','string'],
+        ]);
+        ;
+        $campaign->status = 'published';
+        $campaign->save();
+        $campaign->transactions()->create([
+            'link' => 'https://sepolia.arbiscan.io/tx/' . $request->tx_hash,
+            'amount' => 0,
+            'reason' => 'Creating campaign with title '. $campaign->title,
+            'user_id' => auth()->user()->id,
         ]);
 
-        $campaign->updates()->create([
-            'update_text' => $request->update_text,
+        $campaign->load(['transactions','category']);
+
+        return response()->json(new CampaignResource($campaign), 200);
+    }
+
+
+    /**
+    * Fund a campaign.
+     * @OA\Post(
+     * path="/campaigns/{campaign}/fund",
+     * description="Fund a campaign.",
+     *    @OA\Parameter(
+     *     in="path",
+     *     name="campaign",
+     *     required=true,
+     *     @OA\Schema(type="string"),
+     *   ),
+     * tags={"Campaigns"},
+     * security={{"bearer_token": {} }},
+     *   @OA\RequestBody(
+     *       required=true,
+     *       @OA\MediaType(
+     *           mediaType="multipart/form-data",
+     *           @OA\Schema(
+     *                 required={"tx_hash"},
+     *                 @OA\Property(property="tx_hash", type="string"),
+     *                 @OA\Property(property="amount", type="number", format="float"),
+     *          )
+     *       )
+     *   ),
+     * @OA\Response(
+     *    response=200,
+     *    description="successful operation",
+     *     ),
+     *   @OA\Response(
+     *     response=401,
+     *     description="Unauthenticated",
+     *  ),
+     *   @OA\Response(
+     *     response=403,
+     *     description="Forbidden. This action is unauthorized.",
+     *  ),
+     *   @OA\Response(
+     *     response=422,
+     *     description="Validation error.",
+     *  )
+     * )
+     * )
+     */
+
+    public function fund(Request $request, Campaign $campaign)
+    {
+        $request->validate([
+            'tx_hash' => ['required','string'],
+            'amount' => ['required','numeric','min:0'],
+        ]);
+        $campaign->collected_amount += $request->amount;
+        $campaign->save();
+        $campaign->transactions()->create([
+            'link' => 'https://sepolia.arbiscan.io/tx/' . $request->tx_hash,
+            'amount' => $request->amount,
+            'user_id' => auth()->user()->id,
+            'reason' => 'Funding '. $campaign->title . ' with '. $request->amount.' ETH',
         ]);
 
-        $campaign->load(['updates','category']);
+        $campaign->load(['category', 'transactions']);
 
         return response()->json(new CampaignResource($campaign), 200);
     }

@@ -19,5 +19,6 @@ Route::get('/permissions/me', [PermissionController::class, 'my_permissions']);
 Route::apiResource('roles', RoleController::class);
 Route::get('/roles/{role}/permissions', [PermissionController::class, 'get_permissions']);
 Route::post('/roles/{role}/permissions', [PermissionController::class, 'set_permissions']);
+Route::post('/campaigns/{campaign}/fund', [CampaignController::class, 'fund']);
 Route::apiResource('campaigns', CampaignController::class);
 Route::apiResource('campaign/categories', CampaignCategoryController::class);

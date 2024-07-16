@@ -47,6 +47,17 @@ class User extends Authenticatable
         'email_verified_at' => 'datetime',
     ];
 
+
+    public function transactions()
+    {
+        return $this->hasMany(Transaction::class);
+    }
+
+    public function campaigns()
+    {
+        return $this->hasMany(Campaign::class);
+    }
+
     public function scopeSearch($query, $searchTerm)
     {
         return $query->where('username', 'like', "%{$searchTerm}%")
