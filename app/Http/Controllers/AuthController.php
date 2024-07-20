@@ -21,7 +21,7 @@ class AuthController extends Controller
 
     function get_random_profile_image() {
         // give random number in php laravel
-        $random_number = rand(1, 3);
+        $random_number = rand(1, 10);
         return url('public/profile/' .$random_number . '.png');
     }
 
