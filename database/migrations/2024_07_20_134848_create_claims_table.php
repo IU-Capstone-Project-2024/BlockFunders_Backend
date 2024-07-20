@@ -15,7 +15,7 @@ return new class extends Migration
             $table->id();
             $table->string('tx_hash')->nullable();
             $table->string('link')->nullable();
-            $table->string('metadata');
+            $table->json('metadata');
             $table->unsignedBigInteger('user_id');
             $table->string('status')->default('ready');
             $table->foreign('user_id')->references('id')->on('users')->onDelete('cascade');

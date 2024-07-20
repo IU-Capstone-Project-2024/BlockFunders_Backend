@@ -11,7 +11,7 @@ class ClaimController extends Controller
     public function __construct()
     {
         $this->middleware('auth:sanctum');
-        
+
     }
 
     /**
@@ -66,6 +66,10 @@ class ClaimController extends Controller
             $claims = $q->get();
         else
             $claims = $q->paginate($request->per_page ?? 10);
+
+        foreach ($claims as $claim) {
+            $claim->metadata = json_decode($claim->metadata);
+        }
 
         return response()->json($claims, 200);
     }
@@ -163,7 +167,7 @@ class ClaimController extends Controller
             return response()->json(['message' => 'Unauthorized'], 403);
         }
         $request->validate([
-            'tx_hash' => ['required','string', 'unique:claims,tx_hash'],
+            'tx_hash' => ['required', 'string', 'unique:claims,tx_hash'],
         ]);
         $claim->update([
             'tx_hash' => $request->tx_hash,

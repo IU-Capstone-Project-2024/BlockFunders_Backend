@@ -9,6 +9,10 @@ class Claim extends Model
 {
     use HasFactory;
 
+    protected $casts = [
+        'attributes' => 'json',
+    ];
+    
     protected $fillable = [
         'user_id',
         'tx_hash',

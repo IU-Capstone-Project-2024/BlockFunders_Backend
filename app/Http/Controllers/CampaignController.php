@@ -276,6 +276,7 @@ class CampaignController extends Controller
         $campaign->status = 'published';
         $campaign->save();
         $campaign->transactions()->create([
+            'tx_hash' => $request->tx_hash,
             'link' => 'https://sepolia.arbiscan.io/tx/' . $request->tx_hash,
             'amount' => 0,
             'reason' => 'Creating campaign with title ' . $campaign->title,
@@ -353,6 +354,7 @@ class CampaignController extends Controller
         $campaign->collected_amount += $request->amount;
         $campaign->save();
         $campaign->transactions()->create([
+            'tx_hash' => $request->tx_hash,
             'link' => 'https://sepolia.arbiscan.io/tx/' . $request->tx_hash,
             'amount' => $request->amount,
             'user_id' => auth()->user()->id,
