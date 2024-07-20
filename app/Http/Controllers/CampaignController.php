@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\{Campaign, Claim};
+use App\Services\RewardService;
 use Illuminate\Http\Request;
 use App\Http\Resources\CampaignResource;
 
@@ -16,7 +17,7 @@ class CampaignController extends Controller
         $this->middleware('permission:campaigns.delete')->only(['destroy']);
     }
 
-     /**
+    /**
      * Get all campaigns
      * @OA\Get(
      * path="/campaigns",
@@ -79,8 +80,8 @@ class CampaignController extends Controller
         $request->validate([
             'with_paginate' => ['integer', 'in:0,1'],
             'per_page' => ['integer', 'min:1'],
-            'user_id' => ['integer','exists:users,id'],
-            'category_id' => ['integer','exists:campaign_categories,id'],
+            'user_id' => ['integer', 'exists:users,id'],
+            'category_id' => ['integer', 'exists:campaign_categories,id'],
         ]);
 
         $q = Campaign::query();
@@ -90,24 +91,24 @@ class CampaignController extends Controller
             $q->search($searchTerm);
         }
 
-        if($request->user_id){
-            $q->where('user_id',$request->user_id);
+        if ($request->user_id) {
+            $q->where('user_id', $request->user_id);
         }
 
-        if($request->category_id){
-            $q->where('category_id',$request->category_id);
+        if ($request->category_id) {
+            $q->where('category_id', $request->category_id);
         }
 
         if ($request->with_paginate === '0')
-            $campaigns = $q->with(['updates','category'])->get();
+            $campaigns = $q->with(['updates', 'category'])->get();
         else
-            $campaigns = $q->with(['updates','category'])->paginate($request->per_page ?? 10);
+            $campaigns = $q->with(['updates', 'category'])->paginate($request->per_page ?? 10);
 
         return CampaignResource::collection($campaigns);
     }
 
 
-     /**
+    /**
      * Get specific campaigns
      * @OA\Get(
      * path="/campaigns/{campaign}",
@@ -139,14 +140,14 @@ class CampaignController extends Controller
      *)
      */
 
-     public function show(Campaign $campaign)
-     {
+    public function show(Campaign $campaign)
+    {
         $campaign->load(['category', 'transactions']);
         return response()->json(new CampaignResource($campaign));
-     }
+    }
 
-        /**
-      * Add new campaign.
+    /**
+     * Add new campaign.
      * @OA\Post(
      * path="/campaigns",
      * description="Add new campaign.",
@@ -192,11 +193,11 @@ class CampaignController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'title' => ['required','string'],
-            'description' => ['required','string'],
-            'category_id' => ['required','exists:campaign_categories,id'],
-            'target_amount' => ['required','numeric','min:0'],
-            'image'=> ['required'],
+            'title' => ['required', 'string'],
+            'description' => ['required', 'string'],
+            'category_id' => ['required', 'exists:campaign_categories,id'],
+            'target_amount' => ['required', 'numeric', 'min:0'],
+            'image' => ['required'],
             'deadline' => ['required'],
         ]);
 
@@ -269,7 +270,7 @@ class CampaignController extends Controller
     public function update(Request $request, Campaign $campaign)
     {
         $request->validate([
-            'tx_hash' => ['required','string', 'unique:transactions,tx_hash'],
+            'tx_hash' => ['required', 'string', 'unique:transactions,tx_hash'],
         ]);
         ;
         $campaign->status = 'published';
@@ -277,18 +278,18 @@ class CampaignController extends Controller
         $campaign->transactions()->create([
             'link' => 'https://sepolia.arbiscan.io/tx/' . $request->tx_hash,
             'amount' => 0,
-            'reason' => 'Creating campaign with title '. $campaign->title,
+            'reason' => 'Creating campaign with title ' . $campaign->title,
             'user_id' => auth()->user()->id,
         ]);
 
-        $campaign->load(['transactions','category']);
+        $campaign->load(['transactions', 'category']);
 
         return response()->json(new CampaignResource($campaign), 200);
     }
 
 
     /**
-    * Fund a campaign.
+     * Fund a campaign.
      * @OA\Post(
      * path="/campaigns/{campaign}/fund",
      * description="Fund a campaign.",
@@ -334,54 +335,31 @@ class CampaignController extends Controller
     public function fund(Request $request, Campaign $campaign)
     {
         $request->validate([
-            'tx_hash' => ['required','string', 'unique:transactions,tx_hash'],
-            'amount' => ['required','numeric','min:0'],
+            'tx_hash' => ['required', 'string', 'unique:transactions,tx_hash'],
+            'amount' => ['required', 'numeric', 'min:0'],
         ]);
+        if ($request->amount >= 0.01) {
+            $service = new RewardService();
+            $nft_metadata = $service->create_new_nft(to_user($request->user()), $campaign, $request->amount);
+            if (is_null($nft_metadata)) {
+                return response()->json(['message' => 'Something went wrong generating NFT metadata'], 500);
+            }
+            $claim = new Claim();
+            $claim->user_id = auth()->user()->id;
+            $claim->metadata = json_encode($nft_metadata);
+            $claim->save();
+        }
+
         $campaign->collected_amount += $request->amount;
         $campaign->save();
         $campaign->transactions()->create([
             'link' => 'https://sepolia.arbiscan.io/tx/' . $request->tx_hash,
             'amount' => $request->amount,
             'user_id' => auth()->user()->id,
-            'reason' => 'Funding '. $campaign->title . ' with '. $request->amount.' ETH',
+            'reason' => 'Funding ' . $campaign->title . ' with ' . $request->amount . ' ETH',
         ]);
-        if ($request->amount >= 0.01) {
-            $claim = new Claim();
-            $claim->user_id = auth()->user()->id;
-            $claim->metadata = json_encode([
-                "dna" => "3a5b8cdef0a6789b0c12d34e5f67890a",
-                "name" => "Solar Champion NFT",
-                "description" => "Supporter of renewable energy for all.",
-                "image" => "https://example.com/images/solar_champion_nft.png",
-                "attributes" => [
-                    [
-                    "trait_type"=> "Category",
-                    "value"=> "Renewable Energy"
-                    ],
-                    [
-                    "trait_type"=> "Campaign",
-                    "value"=> "Solar Energy for All"
-                    ],
-                    [
-                    "trait_type"=> "Supporter",
-                    "value"=> "Alice Johnson"
-                    ],
-                    [
-                    "trait_type"=> "Contribution Level",
-                    "value"=> "Gold"
-                    ],
-                    [
-                    "trait_type"=> "Impact",
-                    "value"=> "Global"
-                    ],
-                    [
-                    "trait_type"=> "Energy",
-                    "value"=> "Solar"
-                    ]
-                ]
-            ]);
-            $claim->save();
-        }
+
+
         $campaign->load(['category', 'transactions']);
 
         return response()->json(new CampaignResource($campaign), 200);
@@ -420,10 +398,10 @@ class CampaignController extends Controller
      *)
      */
 
-     public function destroy(Campaign $campaign)
-     {  
+    public function destroy(Campaign $campaign)
+    {
         $campaign->delete();
         return response()->json(null, 204);
-     }
+    }
 
 }
