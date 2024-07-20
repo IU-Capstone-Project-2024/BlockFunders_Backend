@@ -11,6 +11,9 @@ use Illuminate\Routing\Controller as BaseController;
 *  @OA\Server(
 *      url="http://127.0.0.1:8000/api",
 *  ),
+*  @OA\Server(
+*      url="https://block-funders.haidarjbeily.com/public/api",
+*  ),
 *   
 * @OAS\SecurityScheme(
 *      securityScheme="bearer_token",

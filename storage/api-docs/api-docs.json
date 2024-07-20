@@ -6,10 +6,10 @@
     },
     "servers": [
         {
-          "url":"https://block-funders.haidarjbeily.com/public/api"  
+            "url": "http://127.0.0.1:8000/api"
         },
         {
-            "url": "http://127.0.0.1:8000/api"
+            "url": "https://block-funders.haidarjbeily.com/public/api"
         }
     ],
     "paths": {
@@ -558,45 +558,6 @@
                 ]
             }
         },
-        "/campaigns/{campaign}/me": {
-            "get": {
-                "tags": [
-                    "Campaigns"
-                ],
-                "summary": "Get my campaigns",
-                "description": "Get my campaigns",
-                "operationId": "478b6757f485a56f17703181548b609c",
-                "parameters": [
-                    {
-                        "name": "campaign",
-                        "in": "path",
-                        "required": true,
-                        "schema": {
-                            "type": "string"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Success"
-                    },
-                    "401": {
-                        "description": "Unauthenticated"
-                    },
-                    "404": {
-                        "description": "Model not found."
-                    },
-                    "403": {
-                        "description": "Forbidden. This action is unauthorized."
-                    }
-                },
-                "security": [
-                    {
-                        "bearer_token": []
-                    }
-                ]
-            }
-        },
         "/campaigns/{campaign}": {
             "get": {
                 "tags": [
@@ -775,6 +736,154 @@
                 },
                 "responses": {
                     "200": {
+                        "description": "successful operation"
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    },
+                    "403": {
+                        "description": "Forbidden. This action is unauthorized."
+                    },
+                    "422": {
+                        "description": "Validation error."
+                    }
+                },
+                "security": [
+                    {
+                        "bearer_token": []
+                    }
+                ]
+            }
+        },
+        "/claims": {
+            "get": {
+                "tags": [
+                    "Claims"
+                ],
+                "summary": "Get all my claims",
+                "description": "Get all my claims",
+                "operationId": "fc7aec9ba4831f79887a54de874077f8",
+                "parameters": [
+                    {
+                        "name": "with_paginate",
+                        "in": "query",
+                        "description": "Enable pagination (0 = false, 1 = true)",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "enum": [
+                                0,
+                                1
+                            ]
+                        }
+                    },
+                    {
+                        "name": "per_page",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Success"
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    },
+                    "403": {
+                        "description": "Forbidden. This action is unauthorized."
+                    }
+                },
+                "security": [
+                    {
+                        "bearer_token": []
+                    }
+                ]
+            }
+        },
+        "/claims/{claim}": {
+            "get": {
+                "tags": [
+                    "Claims"
+                ],
+                "summary": "Get specific claim",
+                "description": "Get specific claims",
+                "operationId": "1170208076cf96ddab31c542aa714443",
+                "parameters": [
+                    {
+                        "name": "claim",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Success"
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    },
+                    "404": {
+                        "description": "Model not found."
+                    },
+                    "403": {
+                        "description": "Forbidden. This action is unauthorized."
+                    }
+                },
+                "security": [
+                    {
+                        "bearer_token": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "Claims"
+                ],
+                "summary": "Claim minted.",
+                "description": "Mint a claim.",
+                "operationId": "fcf3eec8843e92e5b0cb387387c5fa2a",
+                "parameters": [
+                    {
+                        "name": "claim",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "multipart/form-data": {
+                            "schema": {
+                                "required": [
+                                    "tx_hash"
+                                ],
+                                "properties": {
+                                    "tx_hash": {
+                                        "type": "string"
+                                    },
+                                    "_method": {
+                                        "type": "string",
+                                        "format": "string",
+                                        "example": "PUT"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
                         "description": "successful operation"
                     },
                     "401": {
