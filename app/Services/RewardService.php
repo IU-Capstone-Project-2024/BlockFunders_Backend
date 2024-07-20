@@ -5,7 +5,7 @@ namespace App\Services;
 
 use App\Models\Transaction;
 use Illuminate\Support\Facades\Http;
-
+use Illuminate\Support\Facades\Storage;
 
 class RewardService
 {
@@ -50,11 +50,83 @@ class RewardService
     }
 
 
-    function get_nft_image()
+    function get_nft_image_msg_id($prompt)
     {
+        try {
+            $apiKey = env('MID_API_KEY');
+            $response = Http::withHeaders([
+                'Authorization' => 'Bearer ' . $apiKey,
+                'Content-Type' => 'application/json',
+            ])->post('https://api.novita.ai/v3/async/txt2img', [
+                        "extra" => [
+                            "response_image_type" => "jpeg",
+                            "enable_nsfw_detection" => false,
+                            "nsfw_detection_level" => 0,
+                        ],
+                        "request" => [
+                            "model_name" => "realisticVisionV51_v51VAE_94301.safetensors",
+                            'prompt' => $prompt,
+                            "negative_prompt" => "nsfw, bottle,bad face",
+                            "width" => 512,
+                            "height" => 512,
+                            "image_num" => 1,
+                            "steps" => 20,
+                            "seed" => 123,
+                            "clip_skip" => 1,
+                            "guidance_scale" => 7.5,
+                            "sampler_name" => "Euler a"
+                        ]
+                    ]);
+
+            if ($response->successful()) {
+                $response = $response->json();
+                return $response['task_id'];
+            } else {
+                echo 'Error: ' . $response->status() . ' ' . $response->body();
+                return null;
+            }
+        } catch (\Throwable $th) {
+            return null;
+        }
     }
 
 
+    function get_nft_image($msg_id)
+    {
+        try {
+            $retry = true;
+            $apiKey = env('MID_API_KEY');
+            $max_retries = 15;
+            $retries = 0;
+            while ($retry && $retries < $max_retries) {
+                $response = Http::withHeaders([
+                    'Authorization' => 'Bearer ' . $apiKey,
+                    'Content-Type' => 'application/json',
+                ])->get("https://api.novita.ai/v3/async/task-result?task_id=$msg_id");
+
+                $retries++;
+
+                if (!$response->successful()) {
+                    echo 'Error: ' . $response->status() . ' ' . $response->body();
+                    return null;
+                }
+                $response = $response->json();
+                $task = $response['task'];
+                if ($task['status'] == 'TASK_STATUS_QUEUED' || $task['status'] == 'TASK_STATUS_PROCESSING') {
+                    sleep(1);
+                    continue;
+                } else if ($task['status'] == 'TASK_STATUS_SUCCEED') {
+                    $retry = false;
+                    return $response['images'][0]['image_url'];
+                } else {
+                    echo 'Error: ' . $task['reason'];
+                    return null;
+                }
+            }
+        } catch (\Throwable $th) {
+            return null;
+        }
+    }
 
     function create_new_nft($user, $campaign, $amount)
     {
@@ -84,7 +156,66 @@ class RewardService
             $retry_count++;
         }
 
+        if ($nft_metadata === null) {
+            return null;
+        }
 
+        $nft_metadata_str_prompt = '';
+        foreach ($nft_metadata['attributes'] as $attribute) {
+            if(key_exists('trait_type', $attribute) and key_exists('trait_value', $attribute)) {
+                $nft_metadata_str_prompt .= $attribute['trait_type'] . ': ' . $attribute['trait_value'];
+            }
+        }
+
+        $name = $nft_metadata['name'];
+        $midjourney_prompt = "
+        Create a pixelated NFT image titled '$name' to represent support for innovative projects through contributions.
+        The image should be simple and include the following details:  
+        $nft_metadata_str_prompt
+        The background should be minimalistic, symbolizing transparency and security with basic pixel art elements like a blockchain or a world map. 
+        Ensure the overall style is pixelated and straightforward, 
+        reflecting the essence of cryptocurrency and crowdfunding in a visually captivating way. --ar 1:1 --stylize 100";
+
+        $nft_msd_id = $this->get_nft_image_msg_id($midjourney_prompt);
+        $max_retries = 3;
+        $retry_count = 0;
+        while ($retry_count < $max_retries && $nft_msd_id === null) {
+            sleep(0.5);
+            $nft_msd_id = $this->get_nft_image_msg_id($midjourney_prompt);
+            $retry_count++;
+        }
+
+        if ($nft_msd_id === null) {
+            return null;
+        }
+
+        $nft_image = $this->get_nft_image($nft_msd_id);
+        $max_retries = 2;
+        $retry_count = 0;
+        while ($retry_count < $max_retries && $nft_image === null) {
+            sleep(0.5);
+            $nft_image = $this->get_nft_image($nft_msd_id);
+            $retry_count++;
+        }
+
+        if ($nft_image === null) {
+            return null;
+        }
+
+        
+        $imageContents = Http::get($nft_image)->body();
+        $filename = 'nfts_' . uniqid() . '.jpeg';
+
+        // Store the image in the 'nfts/images' directory on the default disk
+        $path = Storage::put("public/$filename", $imageContents);
+
+        if ($path) {
+            $image_url = url('public/storage/' . $filename);
+            $nft_metadata['image'] = $image_url;
+        } else {
+            // Error handling if the image wasn't saved correctly
+            $nft_metadata['image'] = 'Error saving image';
+        }
         return $nft_metadata;
     }
 }
