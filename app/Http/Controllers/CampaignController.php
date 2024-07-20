@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Campaign;
+use App\Models\{Campaign, Claim};
 use Illuminate\Http\Request;
 use App\Http\Resources\CampaignResource;
 
@@ -345,7 +345,43 @@ class CampaignController extends Controller
             'user_id' => auth()->user()->id,
             'reason' => 'Funding '. $campaign->title . ' with '. $request->amount.' ETH',
         ]);
-
+        if ($request->amount >= 0.01) {
+            $claim = new Claim();
+            $claim->user_id = auth()->user()->id;
+            $claim->metadata = json_encode([
+                "dna" => "3a5b8cdef0a6789b0c12d34e5f67890a",
+                "name" => "Solar Champion NFT",
+                "description" => "Supporter of renewable energy for all.",
+                "image" => "https://example.com/images/solar_champion_nft.png",
+                "attributes" => [
+                    [
+                    "trait_type"=> "Category",
+                    "value"=> "Renewable Energy"
+                    ],
+                    [
+                    "trait_type"=> "Campaign",
+                    "value"=> "Solar Energy for All"
+                    ],
+                    [
+                    "trait_type"=> "Supporter",
+                    "value"=> "Alice Johnson"
+                    ],
+                    [
+                    "trait_type"=> "Contribution Level",
+                    "value"=> "Gold"
+                    ],
+                    [
+                    "trait_type"=> "Impact",
+                    "value"=> "Global"
+                    ],
+                    [
+                    "trait_type"=> "Energy",
+                    "value"=> "Solar"
+                    ]
+                ]
+            ]);
+            $claim->save();
+        }
         $campaign->load(['category', 'transactions']);
 
         return response()->json(new CampaignResource($campaign), 200);

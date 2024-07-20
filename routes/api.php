@@ -1,5 +1,6 @@
 <?php
 
+use App\Models\Claim;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
@@ -24,3 +25,6 @@ Route::post('/campaigns/{campaign}/fund', [CampaignController::class, 'fund']);
 Route::apiResource('campaigns', CampaignController::class);
 Route::apiResource('claims', ClaimController::class);
 Route::apiResource('campaign/categories', CampaignCategoryController::class);
+Route::get("nft_metadata/{claim}", function (Claim $claim) {
+    return response()->json(json_decode($claim->metadata) ?? []);
+});

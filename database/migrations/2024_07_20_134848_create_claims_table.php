@@ -13,8 +13,8 @@ return new class extends Migration
     {
         Schema::create('claims', function (Blueprint $table) {
             $table->id();
-            $table->string('tx_hash');
-            $table->string('link');
+            $table->string('tx_hash')->nullable();
+            $table->string('link')->nullable();
             $table->string('metadata');
             $table->unsignedBigInteger('user_id');
             $table->string('status')->default('ready');
