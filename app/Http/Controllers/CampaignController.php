@@ -269,7 +269,7 @@ class CampaignController extends Controller
     public function update(Request $request, Campaign $campaign)
     {
         $request->validate([
-            'tx_hash' => ['required','string'],
+            'tx_hash' => ['required','string', 'unique:transactions,tx_hash'],
         ]);
         ;
         $campaign->status = 'published';
@@ -334,7 +334,7 @@ class CampaignController extends Controller
     public function fund(Request $request, Campaign $campaign)
     {
         $request->validate([
-            'tx_hash' => ['required','string'],
+            'tx_hash' => ['required','string', 'unique:transactions,tx_hash'],
             'amount' => ['required','numeric','min:0'],
         ]);
         $campaign->collected_amount += $request->amount;

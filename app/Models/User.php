@@ -58,6 +58,11 @@ class User extends Authenticatable
         return $this->hasMany(Campaign::class);
     }
 
+    public function claims()
+    {
+        return $this->hasMany(Claim::class);
+    }
+
     public function scopeSearch($query, $searchTerm)
     {
         return $query->where('username', 'like', "%{$searchTerm}%")

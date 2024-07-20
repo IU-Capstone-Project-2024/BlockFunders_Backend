@@ -8,6 +8,7 @@ use App\Http\Controllers\UserController;
 use App\Http\Controllers\CampaignController;
 use App\Http\Controllers\PermissionController;
 use App\Http\Controllers\CampaignCategoryController;
+use App\Http\Controllers\ClaimController;
 
 Route::post('/register', [AuthController::class, 'register']);
 Route::post('/login', [AuthController::class, 'login']);
@@ -21,4 +22,5 @@ Route::get('/roles/{role}/permissions', [PermissionController::class, 'get_permi
 Route::post('/roles/{role}/permissions', [PermissionController::class, 'set_permissions']);
 Route::post('/campaigns/{campaign}/fund', [CampaignController::class, 'fund']);
 Route::apiResource('campaigns', CampaignController::class);
+Route::apiResource('claims', ClaimController::class);
 Route::apiResource('campaign/categories', CampaignCategoryController::class);

@@ -5,16 +5,18 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-class Transaction extends Model
+class Claim extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['campaign_id', 'link', 'amount', 'user_id', 'reason', 'tx_hash'];
+    protected $fillable = [
+        'user_id',
+        'tx_hash',
+        'link',
+        'metadata',
+        'status',
+    ];
 
-    public function campaign()
-    {
-        return $this->belongsTo(Campaign::class);
-    }
 
     public function user()
     {
