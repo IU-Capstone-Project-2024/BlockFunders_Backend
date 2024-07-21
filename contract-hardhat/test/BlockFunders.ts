@@ -22,6 +22,7 @@ describe("BlockFunders", function () {
       expect(beforeCount).to.equal(0);
 
       const tx = await blockFunders.createCampaign(
+        1,
         owner.address,
         "Help Plant Trees",
         "Tree planting initiative in Amazon.",
@@ -44,6 +45,7 @@ describe("BlockFunders", function () {
       const pastDeadline = (await time.latest()) - 100; // A time in the past
 
       await expect(blockFunders.createCampaign(
+        1,
         owner.address,
         "Expired Campaign",
         "This campaign should fail.",
@@ -60,6 +62,7 @@ describe("BlockFunders", function () {
       const { blockFunders, owner, donor } = await loadFixture(deployBlockFundersFixture);
 
       await blockFunders.createCampaign(
+        1,
         owner.address,
         "Save the Ocean",
         "Ocean cleanup project.",
@@ -69,12 +72,12 @@ describe("BlockFunders", function () {
       );
 
       await expect(
-        await blockFunders.connect(donor).donateToCampaign(0, {
+        await blockFunders.connect(donor).donateToCampaign(1, {
           value: hre.ethers.parseEther("1"), // Send 1 ETH
         })  
       ).to.changeEtherBalances([donor, owner], [hre.ethers.parseEther("-1"), hre.ethers.parseEther("1")]);
 
-      const [donators, donations] = await blockFunders.getDonators(0);
+      const [donators, donations] = await blockFunders.getDonators(1);
       expect(donators[0]).to.equal(donor.address);
       expect(donations[0]).to.equal(hre.ethers.parseEther("1"));
     });
@@ -83,6 +86,7 @@ describe("BlockFunders", function () {
       const { blockFunders, owner, donor } = await loadFixture(deployBlockFundersFixture);
 
       await blockFunders.createCampaign(
+        1,
         owner.address,
         "Save the Ocean",
         "Ocean cleanup project.",
@@ -91,11 +95,11 @@ describe("BlockFunders", function () {
         "https://example.com/ocean.jpg"
       );
 
-      await expect(blockFunders.connect(donor).donateToCampaign(0, {
+      await expect(blockFunders.connect(donor).donateToCampaign(1, {
         value: hre.ethers.parseEther("1") // Send 1 ETH
       }))
       .to.emit(blockFunders, 'DonationReceived')
-      .withArgs(0, donor.address, hre.ethers.parseEther("1"));
+      .withArgs(1, donor.address, hre.ethers.parseEther("1"));
     });
 
   });

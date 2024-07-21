@@ -16,12 +16,14 @@ contract BlockFunders {
         uint256[] donations;
     }
 
+    mapping(uint256 => bool) public exists;
     mapping(uint256 => Campaign) public campaigns;
     uint256 public numOfCampaigns = 0;
 
     error DeadlineInvalid();
     error CampaignNotFound();
     error DonationFailed();
+    error CampaignAlreadyCreated();
 
     event CampaignCreated(
         uint256 indexed campaignId,
@@ -38,6 +40,7 @@ contract BlockFunders {
     event CampaignFunded(uint256 indexed campaignId);
 
     function createCampaign(
+        uint256 _campaignId,
         address _owner,
         string memory _title,
         string memory _description,
@@ -45,7 +48,10 @@ contract BlockFunders {
         uint256 _deadline,
         string memory _imageUrl
     ) public returns (uint256) {
-        Campaign storage campaign = campaigns[numOfCampaigns];
+        if (exists[_campaignId]){
+            revert CampaignAlreadyCreated(); 
+        }
+        Campaign storage campaign = campaigns[_campaignId];
 
         if (_deadline <= block.timestamp) {
             revert DeadlineInvalid();
@@ -67,12 +73,13 @@ contract BlockFunders {
             _deadline
         );
 
+        exists[_campaignId] = true;
         numOfCampaigns++;
         return numOfCampaigns - 1;
     }
 
     function donateToCampaign(uint256 _campaignId) public payable {
-        if (_campaignId >= numOfCampaigns) {
+        if (exists[_campaignId] == false) {
             revert CampaignNotFound();
         }
 
@@ -98,19 +105,11 @@ contract BlockFunders {
     function getDonators(
         uint256 _campaignId
     ) public view returns (address[] memory, uint256[] memory) {
-        if (_campaignId >= numOfCampaigns) {
+        if (exists[_campaignId] == false) {
             revert CampaignNotFound();
         }
 
         Campaign storage campaign = campaigns[_campaignId];
         return (campaign.donators, campaign.donations);
-    }
-
-    function getCampaigns() public view returns (Campaign[] memory) {
-        Campaign[] memory allCampaigns = new Campaign[](numOfCampaigns);
-        for (uint256 _id = 0; _id < numOfCampaigns; _id++) {
-            allCampaigns[_id] = campaigns[_id];
-        }
-        return allCampaigns;
     }
 }
