@@ -137,7 +137,8 @@ class RewardService
                 'Authorization' => 'Bearer ' . $apiKey,
                 'Content-Type' => 'application/json',
             ])->post('https://api.novita.ai/v3/lcm-txt2img', [
-                        "model_name" => "realisticVisionV51_v51VAE_94301.safetensors",
+                        // "model_name" => "protovisionXLHighFidelity3D_release0630Bakedvae_154359.safetensors",
+                        "model_name" => "MAGIFACTORYTShirt_magifactoryTShirtModel_7624.safetensors",
                         'prompt' => $prompt,
                         "negative_prompt" => "",
                         "width" => 1024,
@@ -204,12 +205,11 @@ class RewardService
 
         $name = $nft_metadata['name'];
         $midjourney_prompt = "
-        Create a pixelated NFT image titled '$name' to represent support for innovative projects through contributions.
+        Create a NFT image titled '$name' to represent support for innovative projects through contributions.
         The image should be simple and include the following details:  
         $nft_metadata_str_prompt
-        The background should be minimalistic, symbolizing transparency and security with basic pixel art elements like a blockchain or a world map. 
-        Ensure the overall style is pixelated and straightforward, 
-        reflecting the essence of cryptocurrency and crowdfunding in a visually captivating way. --ar 1:1 --stylize 100";
+        Ensure the overall style is and straightforward, reflecting the essence of cryptocurrency 
+        and crowdfunding in a visually captivating way. Please don't use faces";
 
         // $nft_msd_id = $this->get_nft_image_msg_id($midjourney_prompt);
         // $max_retries = 3;
