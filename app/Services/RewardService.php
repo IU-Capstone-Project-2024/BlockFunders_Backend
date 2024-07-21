@@ -128,6 +128,41 @@ class RewardService
         }
     }
 
+
+    function get_nft_image_in_one_step($prompt)
+    {
+        try {
+            $apiKey = env('MID_API_KEY');
+            $response = Http::withHeaders([
+                'Authorization' => 'Bearer ' . $apiKey,
+                'Content-Type' => 'application/json',
+            ])->post('https://api.novita.ai/v3/lcm-txt2img', [
+                        "model_name" => "realisticVisionV51_v51VAE_94301.safetensors",
+                        'prompt' => $prompt,
+                        "negative_prompt" => "",
+                        "width" => 1024,
+                        "height" => 1024,
+                        "image_num" => 1,
+                        "steps" => 8,
+                        "seed" => -1,
+                        "clip_skip" => 1,
+                        "guidance_scale" => 3,
+                        "sampler_name" => "DPM++ 2S a Karras",
+
+                    ]);
+
+            if ($response->successful()) {
+                $response = $response->json();
+                return $response['images'][0];
+            } else {
+                echo 'Error: ' . $response->status() . ' ' . $response->body();
+                return null;
+            }
+        } catch (\Throwable $th) {
+            return null;
+        }
+    }
+
     function create_new_nft($user, $campaign, $amount)
     {
         $sum_all_amounts = Transaction::where('user_id', $user->id)->sum('amount');
@@ -162,7 +197,7 @@ class RewardService
 
         $nft_metadata_str_prompt = '';
         foreach ($nft_metadata['attributes'] as $attribute) {
-            if(key_exists('trait_type', $attribute) and key_exists('trait_value', $attribute)) {
+            if (key_exists('trait_type', $attribute) and key_exists('trait_value', $attribute)) {
                 $nft_metadata_str_prompt .= $attribute['trait_type'] . ': ' . $attribute['trait_value'];
             }
         }
@@ -176,41 +211,52 @@ class RewardService
         Ensure the overall style is pixelated and straightforward, 
         reflecting the essence of cryptocurrency and crowdfunding in a visually captivating way. --ar 1:1 --stylize 100";
 
-        $nft_msd_id = $this->get_nft_image_msg_id($midjourney_prompt);
+        // $nft_msd_id = $this->get_nft_image_msg_id($midjourney_prompt);
+        // $max_retries = 3;
+        // $retry_count = 0;
+        // while ($retry_count < $max_retries && $nft_msd_id === null) {
+        //     sleep(0.5);
+        //     $nft_msd_id = $this->get_nft_image_msg_id($midjourney_prompt);
+        //     $retry_count++;
+        // }
+
+        // if ($nft_msd_id === null) {
+        //     return null;
+        // }
+
+        // $nft_image = $this->get_nft_image($nft_msd_id);
+        // $max_retries = 2;
+        // $retry_count = 0;
+        // while ($retry_count < $max_retries && $nft_image === null) {
+        //     sleep(0.5);
+        //     $nft_image = $this->get_nft_image($nft_msd_id);
+        //     $retry_count++;
+        // }
+
+        // if ($nft_image === null) {
+        //     return null;
+        // }
+        // $imageContents = Http::get($nft_image)->body();
+
+
+        $nft_image = $this->get_nft_image_in_one_step($midjourney_prompt);
         $max_retries = 3;
         $retry_count = 0;
-        while ($retry_count < $max_retries && $nft_msd_id === null) {
-            sleep(0.5);
-            $nft_msd_id = $this->get_nft_image_msg_id($midjourney_prompt);
-            $retry_count++;
-        }
 
-        if ($nft_msd_id === null) {
-            return null;
-        }
-
-        $nft_image = $this->get_nft_image($nft_msd_id);
-        $max_retries = 2;
-        $retry_count = 0;
         while ($retry_count < $max_retries && $nft_image === null) {
             sleep(0.5);
-            $nft_image = $this->get_nft_image($nft_msd_id);
+            $nft_image = $this->get_nft_image_in_one_step($midjourney_prompt);
             $retry_count++;
         }
 
-        if ($nft_image === null) {
-            return null;
-        }
 
-        
-        $imageContents = Http::get($nft_image)->body();
-        $filename = 'nfts_' . uniqid() . '.jpeg';
+        $filename = 'nfts_' . uniqid() . '.' . $nft_image['image_type'];
+        $imageContents = base64_decode($nft_image['image_file']);
 
         // Store the image in the 'nfts/images' directory on the default disk
         $path = Storage::put("public/$filename", $imageContents);
-
         if ($path) {
-            $image_url = url('public/storage/' . $filename);
+            $image_url = url('storage/' . $filename);
             $nft_metadata['image'] = $image_url;
         } else {
             // Error handling if the image wasn't saved correctly
